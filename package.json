@@ -1,0 +1,17 @@
+{
+  "name": "podchain-demo-api",
+  "version": "1.0.0",
+  "description": "Demonstration logistics API backend for the PODCHAIN protocol evaluation",
+  "module": "src/index.ts",
+  "type": "module",
+  "repository": {
+    "url": "https://github.com/PodChainLib/podchain-demo-api"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --hot src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
