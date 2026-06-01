@@ -4,8 +4,8 @@
 // GET  /tasks/:id/proof
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { PodChain } from "../../../podchain/src/index.ts";
-import { json } from "../index.ts";
+import type { PodChain } from "podchain";
+import { json } from "../index";
 
 export async function handleCompleteTask(
   req: Request,

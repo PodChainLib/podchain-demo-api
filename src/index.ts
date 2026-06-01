@@ -8,14 +8,21 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { Database } from "bun:sqlite";
-import { PodChain } from "../../podchain/src/index";
+import { PodChain } from "podchain";
 import { SQLiteAdapter } from "../../podchain/src/adapters/sqlite-adapter";
 import { handleRegisterRider } from "./routes/riders";
-import { handleCreateTask, handleGetToken } from "./routes/tasks";
+import {
+  handleCreateTask,
+  handleDemoBootstrap,
+  handleGetToken,
+  handleListDemoRiders,
+  handleListTasks,
+  handleSeedDemoTasks,
+} from "./routes/tasks";
 import { handleCompleteTask, handleGetProof } from "./routes/proofs";
 import { handleVerifyChain } from "./routes/chain";
 import { handleRecipientConfirmation, handleRecipientSigningPage } from "./routes/recipient";
-import { PodChainError } from "../../podchain/src/errors";
+import { PodChainError } from "podchain";
 
 // ── Initialise Storage and Protocol ──────────────────────────────────────────
 
@@ -39,9 +46,21 @@ async function route(req: Request): Promise<Response> {
   if (method === "POST" && path === "/tasks")
     return handleCreateTask(req, podchain);
 
+  if (method === "GET" && path === "/tasks")
+    return handleListTasks(req, podchain, db);
+
+  if (method === "GET" && path === "/demo/seed")
+    return handleSeedDemoTasks(req, podchain, db);
+
+  if (method === "POST" && path === "/demo/bootstrap")
+    return handleDemoBootstrap(req, podchain, db);
+
+  if (method === "GET" && path === "/demo/riders")
+    return handleListDemoRiders(req, db);
+
   const taskTokenMatch = path.match(/^\/tasks\/([^/]+)\/recipient-token$/);
   if (method === "GET" && taskTokenMatch)
-    return handleGetToken(req, taskTokenMatch[1]!, podchain);
+    return handleGetToken(req, taskTokenMatch[1]!, db);
 
   const taskCompleteMatch = path.match(/^\/tasks\/([^/]+)\/complete$/);
   if (method === "POST" && taskCompleteMatch)
@@ -69,9 +88,27 @@ async function route(req: Request): Promise<Response> {
 // ── Global Error Handler ──────────────────────────────────────────────────────
 
 async function handleRequest(req: Request): Promise<Response> {
+  const startedAt = Date.now();
+  const url = new URL(req.url);
+  const requestId = crypto.randomUUID().slice(0, 8);
+
+  console.log(
+    `[REQ ${requestId}] ${req.method} ${url.pathname}${url.search}`
+  );
+
   try {
-    return await route(req);
+    const res = await route(req);
+    const elapsedMs = Date.now() - startedAt;
+    console.log(
+      `[RES ${requestId}] ${req.method} ${url.pathname}${url.search} -> ${res.status} (${elapsedMs}ms)`
+    );
+    return res;
   } catch (err) {
+    const elapsedMs = Date.now() - startedAt;
+    console.error(
+      `[ERR ${requestId}] ${req.method} ${url.pathname}${url.search} (${elapsedMs}ms)`,
+      err
+    );
     if (err instanceof PodChainError) {
       return json(err.toJSON(), err.httpStatus);
     }

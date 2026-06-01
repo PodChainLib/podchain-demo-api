@@ -4,9 +4,9 @@
 // POST /confirm/:taskId/sign     — receives the recipient's signature
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { PodChain } from "../../../podchain/src/index.ts";
-import type { Tier3RecipientConfirmation } from "../../../podchain/src/types.ts";
-import { json } from "../index.ts";
+import type { PodChain } from "podchain";
+import type { Tier3RecipientConfirmation } from "podchain";
+import { json } from "../index";
 
 // ── POST /confirm/:taskId/sign ────────────────────────────────────────────────
 

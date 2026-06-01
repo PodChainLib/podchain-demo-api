@@ -3,9 +3,9 @@
 // POST /riders/register
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { PodChain } from "../../../podchain/src/index.ts";
-import { PodChainError } from "../../../podchain/src/errors.ts";
-import { json } from "../index.ts";
+import type { PodChain } from "podchain";
+import { PodChainError } from "podchain";
+import { json } from "../index";
 
 export async function handleRegisterRider(
   req: Request,
@@ -29,7 +29,30 @@ export async function handleRegisterRider(
     return json({ success: false, error: "MISSING_FIELDS", message: "publicKey (JWK) is required" }, 400);
   }
 
-  await podchain.registerKey({ riderId, publicKey: publicKey as never });
+  try {
+    await podchain.registerKey({ riderId, publicKey: publicKey as never });
+  } catch (error) {
+    if (error instanceof PodChainError && error.code === "RIDER_ALREADY_EXISTS") {
+      return json(
+        {
+          success: true,
+          riderId,
+          alreadyRegistered: true,
+          registeredAt: null,
+        },
+        200
+      );
+    }
+    throw error;
+  }
 
-  return json({ success: true, riderId, registeredAt: new Date().toISOString() }, 201);
+  return json(
+    {
+      success: true,
+      riderId,
+      alreadyRegistered: false,
+      registeredAt: new Date().toISOString(),
+    },
+    201
+  );
 }
