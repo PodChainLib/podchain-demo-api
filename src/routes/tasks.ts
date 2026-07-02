@@ -586,11 +586,13 @@ export async function handleCreateTask(
 }
 
 export async function handleGetToken(
-  _req: Request,
+  req: Request,
   taskId: string,
   db: Database
 ): Promise<Response> {
   ensureDemoSchema(db);
+  const requestUrl = new URL(req.url);
+  const baseUrl = process.env["BASE_URL"] ?? `${requestUrl.protocol}//${requestUrl.host}`;
 
   const task = db
     .query(
@@ -663,16 +665,22 @@ export async function handleGetToken(
   }
 
   if (token.tier === 2) {
+    const otp = seedData?.otp ?? null;
     return json({
       ...base,
-      otp: seedData?.otp ?? null,
+      otp,
+      qrPayload: otp,
     });
   }
 
   if (token.tier === 3) {
+    const deepLinkNonce = seedData?.deep_link_nonce ?? null;
     return json({
       ...base,
-      deepLinkNonce: seedData?.deep_link_nonce ?? null,
+      deepLinkNonce,
+      deepLink: deepLinkNonce
+        ? `${baseUrl}/confirm/${taskId}?nonce=${deepLinkNonce}`
+        : null,
       confirmationJson: isTier3Confirmed ? tokenHash : null,
     });
   }
